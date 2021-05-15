@@ -1,0 +1,9 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="KSIS-3:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/KSIS_3_jar</output-path>
+    <root id="archive" name="KSIS-3.jar">
+      <element id="module-output" name="KSIS-3" />
+      <element id="extracted-dir" path="D:/jars/commons-net-3.8.0.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>

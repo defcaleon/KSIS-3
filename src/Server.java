@@ -1,86 +1,55 @@
 import java.io.*;
-import java.net.*;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
 
-public class Server extends Thread {
+public class Server {
 
-    private Socket server = null;
-    private final int PORT = 513;
+    private static Socket clientSocket; //сокет для общения
+    private static ServerSocket server; // серверсокет
+    private static BufferedReader in; // поток чтения из сокета
+    private static BufferedWriter out; // поток записи в сокет
 
-    private String TEMPL_MSG =
-            "The client '%d' sent me message : \n\t";
-    private String TEMPL_CONN =
-            "The client '%d' closed the connection";
-
-
-    public Server() throws IOException {
-        InetAddress ia;
-        ia = InetAddress.getByName("192.168.0.10");
-        ServerSocket temp = new ServerSocket(PORT, 0, ia);
-
-
-        System.out.println("Server started\n\n");
-
-        server = temp.accept();
-        System.out.println("+++++ connection +++++");
-        start();
-
-    }
-
-    public void run() {
+    public static void main(String[] args) {
         try {
-            // Определяем входной и выходной потоки сокета
-            // для обмена данными с клиентом
-            InputStream sin = server.getInputStream();
-            OutputStream sout = server.getOutputStream();
+            try {
+                server = new ServerSocket(13); // серверсокет прослушивает порт 4004
+                System.out.println("Сервер запущен!"); // хорошо бы серверу
+                //   объявить о своем запуске
+                clientSocket = server.accept(); // accept() будет ждать пока
+                //кто-нибудь не захочет подключиться
+                try { // установив связь и воссоздав сокет для общения с клиентом можно перейти
 
-            DataInputStream dis = new DataInputStream(sin);
-            DataOutputStream dos = new DataOutputStream(sout);
 
-            String line = null;
-            while (true) {
-                // Ожидание сообщения от клиента
-                line = dis.readUTF();
-                System.out.println(
-                        TEMPL_MSG + line);
-                System.out.println("I'm sending it back...");
-                // Отсылаем клиенту обратно эту самую
-                // строку текста
-                dos.writeUTF("xuy" + line);
-                // Завершаем передачу данных
-                dos.flush();
-                System.out.println();
-                if (line.equalsIgnoreCase("quit")) {
-                    // завершаем соединение
-                    server.close();
-                    System.out.println(TEMPL_CONN);
-                    break;
+
+                    DateTimeFormatter dtf = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss");
+                    LocalDateTime now = LocalDateTime.now();
+
+
+                    // к созданию потоков ввода/вывода.
+                    // теперь мы можем принимать сообщения
+                    out = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
+
+
+                    // не долго думая отвечает клиенту
+                    System.out.println(dtf.format(now));
+                    out.write(dtf.format(now));
+                    out.flush(); // выталкиваем все из буфера
+
+
+                } finally { // в любом случае сокет будет закрыт
+                    clientSocket.close();
+                    // потоки тоже хорошо бы закрыть
+                    out.close();
                 }
+            } finally {
+                System.out.println("Сервер закрыт!");
+                server.close();
             }
-        } catch (Exception e) {
-            System.out.println("Exception : " + e);
+        } catch (IOException e) {
+            System.err.println(e);
         }
     }
-
-    public int getPort() {
-        return PORT;
-    }
-
-    public void setIP() throws Exception {
-        InetAddress inetAddress = InetAddress.getByName("localhost");
-        SocketAddress IPAddress = new InetSocketAddress(inetAddress, PORT);
-        server.bind(IPAddress);
-    }
-
-
-    public void close() throws IOException {
-        server.close();
-    }
-
-    public String getStringIP() {
-        return server.getInetAddress().toString();
-    }
-
 }
-
-
-

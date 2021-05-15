@@ -1,61 +1,44 @@
-import org.apache.commons.net.bsd.RLoginClient;
-
 import java.io.*;
-import java.net.InetAddress;
+import java.net.Socket;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class Main {
 
+    private static Socket clientSocket; //сокет для общения
+    private static BufferedReader reader; // нам нужен ридер читающий с консоли, иначе как
+    // мы узнаем что хочет сказать клиент?
+    private static BufferedReader in; // поток чтения из сокета
+    private static String out = " ";
 
-
-    public static void main(String[] args){
+    public static void main(String[] args) {
         try {
-            System.out.println("hello");
-            RLoginClient rClient = new RLoginClient();
+            try {
+                // адрес - локальный хост, порт - 4004, такой же как у сервера
+                clientSocket = new Socket("localhost", 13); // этой строкой мы запрашиваем
+                //  у сервера доступ на соединение
+                reader = new BufferedReader(new InputStreamReader(System.in));
+                // читать соообщения с сервера
+                in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
-            rClient.connect(InetAddress.getByName("192.168.0.10"),513);
-            System.out.println("rlogin connected");
-            rClient.rlogin("USER","i5","vt100");
-            System.out.println("fuck");
 
-            InputStream sin  = rClient.getInputStream();
-            OutputStream sout = rClient.getOutputStream();
+                 out = in.readLine(); // ждём, что скажет сервер
 
-            DataInputStream in ;
-            DataOutputStream out;
-            in  = new DataInputStream (sin );
-            out = new DataOutputStream(sout);
 
-            InputStreamReader isr;
-            isr = new InputStreamReader(System.in);
-            BufferedReader keyboard;
-            keyboard = new BufferedReader(isr);
-            String line = null;
-            System.out.println("Type in something and press enter");
-            System.out.println();
-            while (true) {
-                // Пользователь должен ввести строку
-                // и нажать Enter
-                line = keyboard.readLine();
-                // Отсылаем строку серверу
-                out.writeUTF(line);
-                // Завершаем поток
-                out.flush();
-                // Ждем ответа от сервера
-                line = in.readUTF();
-                if (line.endsWith("quit"))
-                    break;
-                else {
-                    System.out.println(
-                            "The server sent me this line :\n\t"
-                                    + line);
-                }
+
+            } finally { // в любом случае необходимо закрыть сокет и потоки
+                System.out.println("Клиент был закрыт...");
+
+                clientSocket.close();
+                in.close();
+                System.out.println(out); // получив - выводим на экран
+
             }
+        } catch (IOException e) {
+            System.err.println(e);
 
-
-
-        }catch(Exception e){
-            e.printStackTrace();
         }
 
     }
+
 }
